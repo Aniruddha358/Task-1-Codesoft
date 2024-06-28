@@ -1,0 +1,96 @@
+import json
+
+class Task:
+    def __init__(self, task_id, description, status=False, due_date=None):
+        self.task_id = task_id
+        self.description = description
+        self.status = status
+        self.due_date = due_date
+
+    def to_dict(self):
+        return {
+            'task_id': self.task_id,
+            'description': self.description,
+            'status': self.status,
+            'due_date': self.due_date
+        }
+
+def save_tasks(filename, tasks):
+    with open(filename, 'w') as file:
+        json.dump([task.to_dict() for task in tasks], file)
+
+def load_tasks(filename):
+    try:
+        with open(filename, 'r') as file:
+            tasks_data = json.load(file)
+            return [Task(**task_data) for task_data in tasks_data]
+    except FileNotFoundError:
+        return []
+
+def add_task(tasks, description, due_date=None):
+    task_id = len(tasks) + 1
+    task = Task(task_id, description, due_date=due_date)
+    tasks.append(task)
+
+def update_task(tasks, task_id, description=None, status=None, due_date=None):
+    for task in tasks:
+        if task.task_id == task_id:
+            if description is not None:
+                task.description = description
+            if status is not None:
+                task.status = status
+            if due_date is not None:
+                task.due_date = due_date
+            break
+
+def delete_task(tasks, task_id):
+    tasks[:] = [task for task in tasks if task.task_id != task_id]
+
+def list_tasks(tasks):
+    for task in tasks:
+        status = 'Completed' if task.status else 'Pending'
+        print(f"ID: {task.task_id}, Description: {task.description}, Status: {status}, Due Date: {task.due_date}")
+
+def main():
+    tasks = []
+    filename = 'tasks.json'
+    tasks = load_tasks(filename)
+
+    while True:
+        print("\nTo-Do List Application")
+        print("1. Add Task")
+        print("2. View Tasks")
+        print("3. Update Task")
+        print("4. Delete Task")
+        print("5. Mark Task as Completed")
+        print("6. Save and Exit")
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            description = input("Enter task description: ")
+            due_date = input("Enter due date (optional): ")
+            add_task(tasks, description, due_date)
+        elif choice == '2':
+            list_tasks(tasks)
+        elif choice == '3':
+            task_id = int(input("Enter task ID to update: "))
+            description = input("Enter new description (leave blank to keep current): ")
+            status_input = input("Enter new status (completed/pending/leave blank to keep current): ").lower()
+            due_date = input("Enter new due date (leave blank to keep current): ")
+            status = True if status_input == 'completed' else False if status_input == 'pending' else None
+            update_task(tasks, task_id, description or None, status, due_date or None)
+        elif choice == '4':
+            task_id = int(input("Enter task ID to delete: "))
+            delete_task(tasks, task_id)
+        elif choice == '5':
+            task_id = int(input("Enter task ID to mark as completed: "))
+            update_task(tasks, task_id, status=True)
+        elif choice == '6':
+            save_tasks(filename, tasks)
+            print("Tasks saved. Exiting.")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
